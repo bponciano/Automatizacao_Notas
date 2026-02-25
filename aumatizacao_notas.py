@@ -9,7 +9,7 @@ import shutil
 
 # Caminhos 
 entrada = "/workspaces/automatizacao_nota/dados_brutos"
-processados = "/workspaces/automatizacao_nota/dos_processados"
+processados = "/workspaces/automatizacao_nota/dados_processados"
 planilha = "/workspaces/automatizacao_nota/notas.xlsx"
 
 # Scanner
