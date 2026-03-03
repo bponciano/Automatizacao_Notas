@@ -1,84 +1,246 @@
-## Automatizador de Notas Fiscais (NF-e) - Metálica
+# 🚀 Automatizador de Notas Fiscais Eletrônicas (NF-e)
+
+Pipeline automatizada para ingestão, normalização relacional e consolidação de dados fiscais (XML NF-e) utilizando **Python + SQLite + Excel**.
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue?style=for-the-badge&logo=python)
 ![Pandas](https://img.shields.io/badge/Pandas-Data_Analysis-150458?style=for-the-badge&logo=pandas)
 ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
 
-Este projeto automatiza o fluxo de extração e armazenamento de dados de Notas Fiscais Eletrônicas (XML). Ele realiza o parsing dos arquivos, organiza as informações em um banco de dados relacional (SQLite) e consolida os dados em uma planilha Excel formatada para análise gerencial, dentro disso decidi usar o SQLite para um estudo, montei um banco de dados para estudo a ser preenchido divindo as informações nas seguintes tabelas:
+---
+### 📌 Visão Geral
 
-```python
-├── enderecos                 # Armazena locais únicos de fornecedores.
-├── fornecedores              # Vincula o CNPJ à razão social e endereço.
-├── notas                     # Dados de cabeçalho (Número, Data, Valor Total, Tipo).
-├── produtos                  # Cadastro único de itens de estoque/consumo.
-└── compras                   # Tabela contendo os itens de cada nota (Quantidade, Valor Unitário, etc).
-```
+Este projeto automatiza o processo de:
 
-## Objetivo
+- Leitura e parsing de arquivos XML de NF-e
+- Extração estruturada de dados fiscais
+- Persistência em banco relacional (SQLite)
+- Consolidação incremental em planilha Excel formatada
+- Organização automática dos arquivos processados
 
-O objetivo desse projeto é diminuir o trabalho braçal e o tempo gasto do corpo de funcionários do recebimento que passam horas digitando em uma planilha nota por nota do que foi recebido, o fluxo completo é:
-
-## Fluxo de Trabalho/Estrutura dos Arquivos
-
-```python
-├── dados_brutos                    # Pasta de entrada dos xml's
-├── dados_processados               # Pasta de armazenamentos dos xml's
-├── automatização_notas.py          # Código que fará o trabalho de leitura
-├── notas.xlsx                      # Planilha a ser preenchida
-├── Metalica_DataBase.db            # Base de dados do SQLite
-└── README.md                       # Documentação
-```
-## Funcionalidades
-
-Extração Inteligente: Realiza a leitura de arquivos XML (NF-e) usando a biblioteca xml.etree.ElementTree.
-
-Classificação Automática: Identifica o tipo de operação (VENDA, REMESSA ou OUTROS) baseando-se no CFOP do primeiro item da nota.
-
-Banco de Dados Relacional: Armazena dados de Fornecedores, Endereços, Notas e Itens em um banco SQLite, garantindo integridade e evitando duplicidade (INSERT OR IGNORE).
-
-Integração com Excel: Exporta os dados processados para uma planilha .xlsx com tabelas formatadas automaticamente via openpyxl.
-
-Gestão de Arquivos: Move automaticamente os arquivos processados da pasta de entrada para uma pasta de histórico, mantendo o ambiente organizado.
-
-## Tecnologias Utilizadas
-
-Python 3.x
-
-Pandas: Manipulação de dados e exportação para Excel.
-
-SQLite3: Armazenamento persistente de dados.
-
-ElementTree: Parsing de estruturas XML complexas.
-
-Openpyxl: Formatação avançada de planilhas e tabelas.
-
-Shutil/OS: Automação de sistema de arquivos.
-
-## Como Utilizar
-
-1. Configuração: Clone o repositório e ajuste os caminhos das pastas no script (variáveis entrada, processados, data_base, planilha).
-
-2. Input: Coloque os arquivos .xml das notas fiscais na pasta dados_brutos.
-
-3. Execução: Rode o script principal:
-
-```python
-python automatizador_notas.py
-```
-
-4. Resultado: Os dados serão inseridos no Metalica_DataBase.db.
-
-   - A planilha notas.xlsx será criada ou atualizada com os novos itens.
-
-   - Os XMLs originais serão movidos para dados_processados.
-
-## Próximos Passos (Roadmap)
-
-- Criar um Dashboard no Power BI conectado ao banco SQLite.
-- Adicionar suporte para leitura de NFSe (Notas de Serviço).
+O objetivo é eliminar digitação manual, reduzir erros operacionais e estruturar os dados para análise e BI.
 
 ---
-Desenvolvido por: 
+
+### 🏗 Arquitetura da Solução
+
+#### Fluxo de Processamento
+```
+dados_brutos (XML)
+↓
+Parsing (ElementTree)
+↓
+Normalização Relacional (SQLite)
+↓
+Consolidação (Pandas)
+↓
+Exportação formatada (Excel)
+↓
+Movimentação para dados_processados
+```
+---
+#### 📂 Estrutura do Projeto
+```
+automatizacao_nota/
+├── dados_brutos/             # Entrada dos XMLs
+├── dados_processados/        # XMLs já processados
+├── automatizacao_notas.py    # Script principal
+├── Metalica_DataBase.db      # Banco SQLite
+├── notas.xlsx                # Planilha consolidada
+└── README.md
+```
+
+---
+
+### 🛠 Stack Tecnológica
+
+- Python 3.x
+- xml.etree.ElementTree → Parsing XML
+- sqlite3 → Banco relacional embarcado
+- pandas → Estruturação de dados
+- openpyxl → Manipulação e formatação Excel
+- os / shutil → Automação de arquivos
+
+---
+
+### 🧠 Modelagem de Dados
+
+O banco SQLite segue normalização relacional básica.
+
+### Tabelas
+
+#### Enderecos
+- ID_Endereco (PK)
+- Rua
+- Numero
+- Bairro
+- Cidade
+- Estado
+
+#### Fornecedores
+- ID_Fornecedor (PK)
+- CNPJ (Unique)
+- Razao_Social
+- ID_Endereco (FK)
+
+#### Notas
+- ID_Nota (PK)
+- Num_Nota
+- Data
+- Valor
+- ID_Fornecedor (FK)
+- Tipo_Nota
+
+#### Produtos
+- ID_Produto (PK)
+- Nome (Unique)
+
+#### Compras (Tabela Fato)
+- ID_Nota (FK)
+- ID_Fornecedor (FK)
+- ID_Produto (FK)
+- Data
+- Quantidade
+- Valor_Unitario
+- Valor_Total
+
+---
+
+### ⚙️ Funcionamento Técnico
+
+
+#### 1️⃣ Parsing XML
+
+Utiliza namespace oficial da NF-e:
+
+```python
+ns = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
+```
+Dados extraídos:
+
+- CNPJ
+
+- Razão Social
+
+- Endereço completo
+
+- Número da nota
+
+- Data de emissão
+
+- Valor total
+
+- CFOP
+
+- Itens (produto, quantidade, valor unitário e total)
+
+---
+#### 2️⃣ Classificação Automática por CFOP
+
+A tipificação da nota é baseada no prefixo do CFOP:
+
+| Prefixo        | Tipo    |
+| -------------- | ------- |
+| 11, 21, 51, 61 | VENDA   |
+| 19, 29, 59, 69 | REMESSA |
+| Outros         | OUTROS  |
+
+---
+#### 3️⃣ Persistência Relacional
+
+Uso de INSERT OR IGNORE para evitar duplicidade
+
+Controle transacional com:
+
+- commit() em sucesso
+
+- rollback() em erro
+
+Garante integridade e idempotência parcial.
+
+---
+#### 4️⃣ Consolidação Incremental no Excel
+
+Cenários tratados:
+
+✔ Se a planilha não existir:
+
+- Criação automática
+
+- Inserção de tabela estruturada
+
+- Aplicação de estilo formatado
+
+✔ Se já existir:
+
+- Append de novos registros
+
+- Atualização dinâmica da referência da tabela
+
+- Preservação da formatação
+
+---
+#### 5️⃣ Automação de Arquivos
+
+Após processamento bem-sucedido:
+```python
+shutil.move(caminho_completo, processados)
+```
+Evita reprocessamento e mantém organização.
+
+---
+### 🔐 Tratamento de Erros
+
+- Try/Except por arquivo
+
+- Rollback em falhas
+
+- Continuidade do processamento
+
+- Log informativo no terminal
+
+----
+### ▶️ Como Executar
+1. Clone o repositório
+```
+git clone <url-do-repositorio>
+```
+2. Instale as dependências
+```
+pip install pandas openpyxl
+```
+3. Execute o script
+```
+python automatizacao_notas.py
+```
+Coloque os XMLs na pasta dados_brutos/.
+
+---
+### 📊 Aplicações
+
+- Controle de compras
+
+- Análise de fornecedores
+
+- Base para Power BI
+
+- Auditoria fiscal interna
+
+- Estruturação de dados para BI
+
+----
+### 🚀 Possíveis Evoluções
+
+- Interface gráfica (Streamlit)
+
+- API para ingestão automática
+
+- Logs estruturados
+
+- Containerização com Docker
+
+- Integração direta com Power BI
+
+----
+### 👨‍💻 Autor
 
 Breno Ponciano
----
