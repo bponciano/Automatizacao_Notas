@@ -1,246 +1,159 @@
-# 🚀 Automatizador de Notas Fiscais Eletrônicas (NF-e)
+# 📊 Automatizador de Notas Fiscais (NF-e)
 
-Pipeline automatizada para ingestão, normalização relacional e consolidação de dados fiscais (XML NF-e) utilizando **Python + SQLite + Excel**.
+> Pipeline de ingestão e normalização de dados fiscais em XML com persistência relacional e consolidação analítica em Excel.
+
+Este projeto simula um fluxo real de engenharia de dados, realizando parsing de XML estruturado, modelagem relacional em SQLite e geração incremental de dataset para análise.
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue?style=for-the-badge&logo=python)
 ![Pandas](https://img.shields.io/badge/Pandas-Data_Analysis-150458?style=for-the-badge&logo=pandas)
 ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
 
----
-### 📌 Visão Geral
+## 🎯 Objetivo do Projeto
 
-Este projeto automatiza o processo de:
+Automatizar o processamento de Notas Fiscais Eletrônicas (NF-e) para:
 
-- Leitura e parsing de arquivos XML de NF-e
-- Extração estruturada de dados fiscais
-- Persistência em banco relacional (SQLite)
-- Consolidação incremental em planilha Excel formatada
-- Organização automática dos arquivos processados
+- Eliminar digitação manual
+- Garantir integridade relacional
+- Evitar duplicidade de registros
+- Criar base estruturada para análise de dados
+- Simular pipeline de dados de ponta a ponta
 
-O objetivo é eliminar digitação manual, reduzir erros operacionais e estruturar os dados para análise e BI.
+Projeto desenvolvido como prática aplicada de **Engenharia de Dados com foco em ingestão, modelagem e consolidação analítica.**
 
----
+## 🏗 Arquitetura da Solução
 
-### 🏗 Arquitetura da Solução
-
-#### Fluxo de Processamento
 ```
-dados_brutos (XML)
+XML (dados_brutos)
 ↓
 Parsing (ElementTree)
 ↓
-Normalização Relacional (SQLite)
+Transformação e Classificação
 ↓
-Consolidação (Pandas)
+Persistência Relacional (SQLite)
 ↓
-Exportação formatada (Excel)
+Consolidação incremental (Pandas)
+↓
+Exportação estruturada (Excel)
 ↓
 Movimentação para dados_processados
 ```
----
-#### 📂 Estrutura do Projeto
-```
-automatizacao_nota/
-├── dados_brutos/             # Entrada dos XMLs
-├── dados_processados/        # XMLs já processados
-├── automatizacao_notas.py    # Script principal
-├── Metalica_DataBase.db      # Banco SQLite
-├── notas.xlsx                # Planilha consolidada
-└── README.md
-```
 
----
-
-### 🛠 Stack Tecnológica
+## ⚙️ Stack Tecnológica
 
 - Python 3.x
-- xml.etree.ElementTree → Parsing XML
-- sqlite3 → Banco relacional embarcado
-- pandas → Estruturação de dados
-- openpyxl → Manipulação e formatação Excel
-- os / shutil → Automação de arquivos
+- xml.etree.ElementTree (Parsing XML)
+- SQLite3 (Banco relacional embarcado)
+- Pandas (Estruturação e consolidação)
+- Openpyxl (Manipulação e formatação Excel)
+- OS / Shutil (Automação de arquivos)
+
+## 🔄 Pipeline de Dados
+
+### 1️⃣ Ingestão
+
+- Leitura automática de arquivos `.xml` na pasta `dados_brutos`
+- Identificação de estrutura válida NF-e
+- Uso de namespace oficial da NF-e
 
 ---
 
-### 🧠 Modelagem de Dados
+### 2️⃣ Extração
 
-O banco SQLite segue normalização relacional básica.
-
-### Tabelas
-
-#### Enderecos
-- ID_Endereco (PK)
-- Rua
-- Numero
-- Bairro
-- Cidade
-- Estado
-
-#### Fornecedores
-- ID_Fornecedor (PK)
-- CNPJ (Unique)
-- Razao_Social
-- ID_Endereco (FK)
-
-#### Notas
-- ID_Nota (PK)
-- Num_Nota
-- Data
-- Valor
-- ID_Fornecedor (FK)
-- Tipo_Nota
-
-#### Produtos
-- ID_Produto (PK)
-- Nome (Unique)
-
-#### Compras (Tabela Fato)
-- ID_Nota (FK)
-- ID_Fornecedor (FK)
-- ID_Produto (FK)
-- Data
-- Quantidade
-- Valor_Unitario
-- Valor_Total
-
----
-
-### ⚙️ Funcionamento Técnico
-
-
-#### 1️⃣ Parsing XML
-
-Utiliza namespace oficial da NF-e:
-
-```python
-ns = {'nfe': 'http://www.portalfiscal.inf.br/nfe'}
-```
-Dados extraídos:
+Campos extraídos:
 
 - CNPJ
-
 - Razão Social
-
 - Endereço completo
-
 - Número da nota
-
 - Data de emissão
-
-- Valor total
-
+- Valor total da nota
 - CFOP
-
 - Itens (produto, quantidade, valor unitário e total)
 
 ---
-#### 2️⃣ Classificação Automática por CFOP
 
-A tipificação da nota é baseada no prefixo do CFOP:
+### 3️⃣ Transformação
 
-| Prefixo        | Tipo    |
-| -------------- | ------- |
-| 11, 21, 51, 61 | VENDA   |
+- Conversão de tipos (float, date)
+- Classificação automática por CFOP:
+
+| Prefixo CFOP | Tipo |
+|--------------|------|
+| 11, 21, 51, 61 | VENDA |
 | 19, 29, 59, 69 | REMESSA |
-| Outros         | OUTROS  |
+| Outros | OUTROS |
 
 ---
-#### 3️⃣ Persistência Relacional
 
-Uso de INSERT OR IGNORE para evitar duplicidade
+### 4️⃣ Persistência Relacional
 
-Controle transacional com:
+Modelagem normalizada com 5 entidades:
 
-- commit() em sucesso
+- Enderecos
+- Fornecedores
+- Notas
+- Produtos
+- Compras (tabela fato)
 
-- rollback() em erro
+Boas práticas aplicadas:
 
-Garante integridade e idempotência parcial.
-
----
-#### 4️⃣ Consolidação Incremental no Excel
-
-Cenários tratados:
-
-✔ Se a planilha não existir:
-
-- Criação automática
-
-- Inserção de tabela estruturada
-
-- Aplicação de estilo formatado
-
-✔ Se já existir:
-
-- Append de novos registros
-
-- Atualização dinâmica da referência da tabela
-
-- Preservação da formatação
+- `INSERT OR IGNORE` para evitar duplicidade
+- Controle transacional com `commit()` e `rollback()`
+- Relacionamentos via chave estrangeira
+- Separação entre dimensões e fato
 
 ---
-#### 5️⃣ Automação de Arquivos
 
-Após processamento bem-sucedido:
-```python
-shutil.move(caminho_completo, processados)
-```
-Evita reprocessamento e mantém organização.
+### 5️⃣ Consolidação Analítica
 
----
-### 🔐 Tratamento de Erros
+- Criação incremental de DataFrame
+- Atualização automática da planilha
+- Manutenção de tabela formatada
+- Atualização dinâmica do range da tabela Excel
 
-- Try/Except por arquivo
-
-- Rollback em falhas
-
-- Continuidade do processamento
-
-- Log informativo no terminal
-
-----
-### ▶️ Como Executar
-1. Clone o repositório
-```
-git clone <url-do-repositorio>
-```
-2. Instale as dependências
-```
-pip install pandas openpyxl
-```
-3. Execute o script
-```
-python automatizacao_notas.py
-```
-Coloque os XMLs na pasta dados_brutos/.
+Output:
+Formato estruturado e pronto para BI.
 
 ---
-### 📊 Aplicações
 
-- Controle de compras
+### 6️⃣ Automação do Fluxo
 
-- Análise de fornecedores
+Após processamento:
 
-- Base para Power BI
+- XML movido para `dados_processados`
+- Evita reprocessamento
+- Mantém histórico organizado
 
+## 🧠 Conceitos Aplicados
+
+- Parsing de XML estruturado
+- Normalização relacional
+- Integridade de dados
+- Controle transacional
+- Data wrangling
+- Automação de processos
+- Pipeline incremental
+- Integração SQL + Excel
+
+## 📊 Aplicações Analíticas
+
+- Análise de compras por fornecedor
+- Volume por período
+- Classificação por tipo de operação
+- Base para dashboards (Power BI / Tableau)
 - Auditoria fiscal interna
 
-- Estruturação de dados para BI
+## 🚀 Evoluções Futuras
 
-----
-### 🚀 Possíveis Evoluções
-
-- Interface gráfica (Streamlit)
-
-- API para ingestão automática
-
-- Logs estruturados
-
+- Parametrização de caminhos via variável de ambiente
+- Logging estruturado
 - Containerização com Docker
+- Migração para PostgreSQL
+- API para ingestão automatizada
+- Dashboard integrado ao banco SQLite
+- Agendamento automático (cron / scheduler)
 
-- Integração direta com Power BI
+## 👨‍💻 Autor
 
-----
-### 👨‍💻 Autor
-
-Breno Ponciano
+**Breno Ponciano**  
+Foco em Engenharia e Análise de Dados
